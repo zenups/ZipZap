@@ -1,0 +1,27 @@
+; pio to turn on an output pin for an exact interval
+
+.program zap
+.side_set 1 opt
+public entry_point:
+.wrap_target
+    pull block
+    out x, 32   side 1
+delay:
+    jmp x-- delay
+    irq wait 0  side 0
+.wrap
+
+% c-sdk {
+static inline void zap_program_init(PIO pio, uint sm, uint offset, uint pin) {
+
+    //sm_config_set_out_pins(&c, pin, 1);
+    pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+
+    pio_sm_config c = zap_program_get_default_config(offset);
+    sm_config_set_sideset_pins(&c, pin);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
