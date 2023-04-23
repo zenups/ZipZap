@@ -1,0 +1,39 @@
+;Just curious if pio can be used to debounce and read a rotary controller
+
+.program rotary
+public entry_point:
+.wrap_target
+    wait 0 pin 0          ;Wait for CLK pin to go low
+    jmp pin pin_high      ;Jump if DT pin is high
+    irq wait 1            ;Raise down interrupt and wait for acknowledgement
+    jmp debounce_pause    ;Jump to debounce
+pin_high:
+    irq wait 0            ;Raise up interrupt and wait for acknowledgement
+debounce_pause:
+    wait 1 pin 0 [0]      ;Wait for CLK to return to high
+    wait 1 pin 1 [15]     ;Wait for DT to return to high and pause for 15 cycles just in case.
+                          ;Pause doesn't seem to be completely needed but it does seem to reduce
+                          ;double entries to basically 0 from infrequent.
+.wrap
+
+% c-sdk {
+static inline void rotary_program_init(PIO pio, uint sm, uint offset, uint pin) {
+    pio_sm_config c = rotary_program_get_default_config(offset);
+
+    //Pull both pins high
+    gpio_pull_up(pin);
+    gpio_pull_up(pin + 1);
+
+    //Init both pins as inputs
+    pio_gpio_init(pio, pin);
+    pio_gpio_init(pio, pin + 1);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 2, false);
+    sm_config_set_in_pins(&c, pin);
+    //Set second pin (DT) as the jmp pin
+    sm_config_set_jmp_pin(&c, pin + 1);
+
+    //Start the state machine
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

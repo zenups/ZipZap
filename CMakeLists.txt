@@ -11,6 +11,7 @@ pico_sdk_init()
 add_executable(ZipZap main.cpp)
 
 pico_generate_pio_header(ZipZap ${CMAKE_CURRENT_LIST_DIR}/zap.pio)
+pico_generate_pio_header(ZipZap ${CMAKE_CURRENT_LIST_DIR}/rotary.pio)
 
 add_subdirectory(pico-ssd1306)
 
