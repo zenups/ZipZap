@@ -61,8 +61,8 @@ void updateDisplay(){
 
     drawText(&display, font_8x8, "Microseconds", 0, 50);
     char buf[5];
-    sprintf(buf, "%u", pulseLength);
-    drawText(&display, font_16x32, buf, 0, 0);
+    sprintf(buf, "%4u", pulseLength);
+    drawText(&display, font_16x32, buf, 0, 10);
 
     if(zapping){
         display.addBitmapImage(88, 0, 40, 64, lightning);
@@ -164,7 +164,7 @@ void irq_callback(uint gpio, uint32_t event_mask){
             break;
 #endif
         case BUTTON_PIN:
-            if (zapping) break;
+            if (zapping || cooling) break;
             zapping = true;
             updateDisplay();
             pio_sm_put_blocking(zap_pio, sm, 125000*pulseLength);
